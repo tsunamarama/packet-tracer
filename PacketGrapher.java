@@ -1,5 +1,9 @@
+import javax.imageio.ImageIO;
 import javax.swing.*;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.File;
+import java.io.IOException;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -41,6 +45,23 @@ public class PacketGrapher extends JPanel {
         defaultGraph = false;
         setupGraphParameters();
         repaint();
+    }
+
+    /**
+     * Saves the current graph to PNG format in the current file directory
+     * @param parentPath the <code>String</code> parent path of the last opened text file
+     * @param hostAddr the <code>String</code> currently selected host IP address
+     */
+    public String saveGraph(String parentPath, String hostAddr) {
+        BufferedImage graphImage = new BufferedImage(this.getWidth(), this.getHeight(), BufferedImage.TYPE_INT_RGB);
+        Graphics2D g2d = graphImage.createGraphics();
+        paintComponent(g2d);
+        try {
+            ImageIO.write(graphImage, "png", new File(parentPath + "\\" + hostAddr + ".png"));
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return parentPath + "\\" + hostAddr + ".png";
     }
 
     private void drawAxes(Graphics g) {
@@ -109,6 +130,30 @@ public class PacketGrapher extends JPanel {
         drawGraph(g);
     }
 
+    /**
+     * Gets the <code>Integer</code> maximum bytes for the transmission in context.
+     * @return the maximum number of bytes
+     */
+    public Integer getMaxBytes() {
+        return maxBytes;
+    }
+
+    /**
+     * Gets the <code>Integer</code> time length in seconds for the transmission in context.
+     * @return the maximum number of seconds
+     */
+    public Integer getMaxSeconds() {
+        return maxSeconds;
+    }
+
+    /**
+     * Gets the total transimission volume for the transmission in context. 
+     * @return the total volume of bytes
+     */
+    public Integer getTotalBytes() {
+        return graphData.values().stream().reduce(0, Integer::sum);
+    }
+
     private void setupGraphParameters() {
         maxBytes = getMaxValue(1);
         setIncrement();
@@ -155,9 +200,13 @@ public class PacketGrapher extends JPanel {
     }
 
     private void setIncrement() {
-        if (maxBytes >= 200000) {
+        if (maxBytes >= 800000) {
             BYTE_INCR = 200000.0;
-        } else if (maxBytes >= 20000) {
+		} else if (maxBytes >= 400000) {
+			BYTE_INCR = 100000.0;
+		} else if (maxBytes >= 50000) {
+			BYTE_INCR = 50000.0;
+		} else if (maxBytes >= 20000) {
             BYTE_INCR = 20000.0;
         } else if (maxBytes >= 2000) {
             BYTE_INCR = 2000.0;
